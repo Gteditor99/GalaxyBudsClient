@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Buds2 Pro Firmware Updater</string>
+    <string name="select_device">Select Device</string>
+    <string name="connect">Connect</string>
+    <string name="disconnect">Disconnect</string>
+    <string name="status_disconnected">Disconnected</string>
+    <string name="status_connecting">Connecting…</string>
+    <string name="status_connected">Connected to %s</string>
+    <string name="firmware_source">Firmware Source</string>
+    <string name="sideload_file">Sideload File</string>
+    <string name="download_firmware">Download from Server</string>
+    <string name="check_updates">Check for Updates</string>
+    <string name="install_firmware">Install Firmware</string>
+    <string name="no_firmware">No firmware loaded</string>
+    <string name="firmware_loaded">Firmware: %s</string>
+    <string name="transfer_progress">Transfer Progress</string>
+    <string name="cancel_transfer">Cancel</string>
+    <string name="no_paired_devices">No paired Buds2 Pro found. Please pair your earbuds first in Android Bluetooth settings.</string>
+    <string name="permission_required">Bluetooth permissions are required</string>
+</resources>
