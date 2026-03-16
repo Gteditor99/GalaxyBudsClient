@@ -263,7 +263,7 @@ class MainActivity : Activity() {
     }
 
     private fun onCheckUpdates() {
-        log("Checking for updates...")
+        log("Checking GitHub firmware archive...")
         checkUpdatesBtn.isEnabled = false
         Thread {
             try {
@@ -278,7 +278,7 @@ class MainActivity : Activity() {
                         log("Found ${fws.size} firmware(s)")
                         firmwareListContainer.visibility = View.VISIBLE
                         firmwareSpinner.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item,
-                            fws.map { "${it.buildName} (${it.region})" })
+                            fws.map { "${it.buildName} (${it.size / 1024}KB)" })
                     }
                 }
             } catch (e: Exception) {
@@ -300,7 +300,7 @@ class MainActivity : Activity() {
 
         Thread {
             try {
-                val bytes = FirmwareRemoteClient.downloadFirmware(fw.buildName)
+                val bytes = FirmwareRemoteClient.downloadFirmware(fw.downloadUrl)
                 handler.post {
                     downloadBtn.isEnabled = true
                     log("Downloaded ${bytes.size} bytes")
