@@ -160,8 +160,8 @@ class MainActivity : Activity() {
                     connectionStatus.text = "Connected: ${device.name}"
                     connectionStatus.setTextColor(0xFF018786.toInt())
                     disconnectBtn.isEnabled = true
-                    installBtn.isEnabled = loadedBinary != null
                     setupTransferManager()
+                    updateInstallButton()
                     log("Connected!")
                 } else {
                     connectionStatus.text = "Disconnected"
@@ -181,7 +181,8 @@ class MainActivity : Activity() {
                 handler.post {
                     transferStatus.text = "State: $s"
                     cancelBtn.isEnabled = s != FirmwareTransferManager.State.READY
-                    installBtn.isEnabled = s == FirmwareTransferManager.State.READY && loadedBinary != null && btClient.isConnected
+                    if (s == FirmwareTransferManager.State.READY) updateInstallButton()
+                    else installBtn.isEnabled = false
                     log("Transfer state: $s")
                 }
             }
@@ -220,6 +221,18 @@ class MainActivity : Activity() {
         }
     }
 
+    private fun updateInstallButton() {
+        val hasFirmware = loadedBinary != null
+        val connected = btClient.isConnected
+        installBtn.isEnabled = hasFirmware && connected
+        installBtn.text = when {
+            !hasFirmware && !connected -> "Install (load firmware & connect)"
+            !hasFirmware -> "Install (load firmware first)"
+            !connected -> "Install (connect first)"
+            else -> "Install Firmware"
+        }
+    }
+
     private fun onDisconnect() {
         transferManager?.cancel()
         btClient.disconnect()
@@ -227,7 +240,7 @@ class MainActivity : Activity() {
         connectionStatus.setTextColor(0xFFB00020.toInt())
         connectBtn.isEnabled = true
         disconnectBtn.isEnabled = false
-        installBtn.isEnabled = false
+        updateInstallButton()
         log("Disconnected")
     }
 
@@ -248,7 +261,7 @@ class MainActivity : Activity() {
                 loadedBinary = FirmwareBinary(bytes, name)
                 val fw = loadedBinary!!
                 firmwareInfo.text = "File: $name\nSize: ${bytes.size / 1024}KB\nSegments: ${fw.segmentsCount}\nCRC32: 0x${String.format("%08X", fw.crc32)}\nBuds2 Pro: ${if (fw.isBuds2Pro) "Yes" else "WARNING!"}"
-                installBtn.isEnabled = btClient.isConnected
+                updateInstallButton()
                 log("Firmware loaded: $name (${fw.segmentsCount} segments)")
                 if (!fw.isBuds2Pro) {
                     AlertDialog.Builder(this).setTitle("Warning")
@@ -308,7 +321,7 @@ class MainActivity : Activity() {
                         loadedBinary = FirmwareBinary(bytes, fw.buildName)
                         val bin = loadedBinary!!
                         firmwareInfo.text = "Build: ${fw.buildName}\nSize: ${bytes.size / 1024}KB\nSegments: ${bin.segmentsCount}\nCRC32: 0x${String.format("%08X", bin.crc32)}\nBuds2 Pro: ${if (bin.isBuds2Pro) "Yes" else "WARNING!"}"
-                        installBtn.isEnabled = btClient.isConnected
+                        updateInstallButton()
                         log("Firmware ready: ${fw.buildName}")
                     } catch (e: Exception) {
                         log("ERROR parsing: ${e.message}")
@@ -348,7 +361,7 @@ class MainActivity : Activity() {
     private fun onCancel() {
         transferManager?.cancel()
         cancelBtn.isEnabled = false
-        installBtn.isEnabled = loadedBinary != null && btClient.isConnected
+        updateInstallButton()
         transferStatus.text = "Cancelled"
         log("Cancelled by user")
     }
