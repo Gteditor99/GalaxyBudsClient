@@ -28,11 +28,16 @@ class BluetoothSppClient {
     val isConnected: Boolean get() = socket?.isConnected == true
 
     fun getPairedBuds2Pro(): List<BluetoothDevice> {
-        val adapter = BluetoothAdapter.getDefaultAdapter() ?: return emptyList()
-        return adapter.bondedDevices?.filter { d ->
-            val n = d.name ?: ""
-            n.contains("Buds2 Pro", true) || n.contains("Buds 2 Pro", true) || n.contains("Galaxy Buds2 Pro", true)
-        } ?: emptyList()
+        return try {
+            val adapter = BluetoothAdapter.getDefaultAdapter() ?: return emptyList()
+            adapter.bondedDevices?.filter { d ->
+                val n = d.name ?: ""
+                n.contains("Buds2 Pro", true) || n.contains("Buds 2 Pro", true) || n.contains("Galaxy Buds2 Pro", true)
+            } ?: emptyList()
+        } catch (e: SecurityException) {
+            Log.w(TAG, "Bluetooth permission denied", e)
+            emptyList()
+        }
     }
 
     fun connect(device: BluetoothDevice): Boolean {
@@ -48,6 +53,10 @@ class BluetoothSppClient {
             true
         } catch (e: IOException) {
             Log.e(TAG, "Connect failed", e)
+            disconnect()
+            false
+        } catch (e: SecurityException) {
+            Log.e(TAG, "Bluetooth permission denied", e)
             disconnect()
             false
         }
