@@ -29,21 +29,19 @@ $AAPT package -f -m \
 echo "=== Step 2: Compile Kotlin + R.java ==="
 $KOTLINC \
     -cp "$PLATFORM" \
-    -d "$OUT/classes" \
+    -include-runtime \
+    -d "$OUT/classes.jar" \
     -jvm-target 1.8 \
     -nowarn \
     src/*.kt "$OUT/gen/com/galaxybuds/firmwareupdater/R.java" \
     2>&1
 
-echo "=== Step 3: Convert to DEX ==="
-# Find all class files
-find "$OUT/classes" -name "*.class" > "$OUT/classlist.txt"
-
-# d8 requires input as a jar or class files
+# Extract classes from jar for dx
 cd "$OUT/classes"
-jar cf "$OUT/classes.jar" .
+jar xf "$OUT/classes.jar"
 cd "$BUILD_DIR"
 
+echo "=== Step 3: Convert to DEX ==="
 java -cp "$DX_JAR" com.android.dx.command.Main --dex --output="$OUT/dex/classes.dex" "$OUT/classes.jar"
 
 echo "=== Step 4: Package APK ==="
