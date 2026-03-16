@@ -2,8 +2,11 @@ package com.galaxybuds.firmwareupdater
 
 import android.app.Activity
 import android.app.AlertDialog
+import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothDevice
 import android.content.Intent
+import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
@@ -13,6 +16,8 @@ import java.text.SimpleDateFormat
 import java.util.*
 
 class MainActivity : Activity() {
+
+    private val RC_BT_PERMS = 100
 
     private lateinit var btClient: BluetoothSppClient
     private var transferManager: FirmwareTransferManager? = null
@@ -74,7 +79,34 @@ class MainActivity : Activity() {
         installBtn.setOnClickListener { onInstall() }
         cancelBtn.setOnClickListener { onCancel() }
 
+        requestBluetoothPermissions()
+    }
+
+    private fun requestBluetoothPermissions() {
+        if (Build.VERSION.SDK_INT >= 31) {
+            val needed = mutableListOf<String>()
+            if (checkSelfPermission("android.permission.BLUETOOTH_CONNECT") != PackageManager.PERMISSION_GRANTED)
+                needed.add("android.permission.BLUETOOTH_CONNECT")
+            if (checkSelfPermission("android.permission.BLUETOOTH_SCAN") != PackageManager.PERMISSION_GRANTED)
+                needed.add("android.permission.BLUETOOTH_SCAN")
+            if (needed.isNotEmpty()) {
+                log("Requesting Bluetooth permissions...")
+                requestPermissions(needed.toTypedArray(), RC_BT_PERMS)
+                return
+            }
+        }
         refreshDeviceList()
+    }
+
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (requestCode == RC_BT_PERMS) {
+            val denied = permissions.zip(grantResults.toList()).filter { it.second != PackageManager.PERMISSION_GRANTED }
+            if (denied.isNotEmpty()) {
+                log("WARNING: Bluetooth permissions denied: ${denied.map { it.first.substringAfterLast('.') }}")
+            }
+            refreshDeviceList()
+        }
     }
 
     override fun onDestroy() {
@@ -84,14 +116,30 @@ class MainActivity : Activity() {
     }
 
     private fun refreshDeviceList() {
-        pairedDevices = btClient.getPairedBuds2Pro()
+        // Log all paired devices for debugging
+        try {
+            val adapter = BluetoothAdapter.getDefaultAdapter()
+            if (adapter == null) {
+                log("ERROR: No Bluetooth adapter found")
+            } else {
+                val all = adapter.bondedDevices ?: emptySet()
+                log("All paired devices (${all.size}):")
+                for (d in all) {
+                    log("  - ${d.name ?: "null"} [${d.address}]")
+                }
+            }
+        } catch (e: SecurityException) {
+            log("ERROR: Cannot read paired devices - permission denied")
+        }
+
+        pairedDevices = btClient.getPairedBudsDevices()
         if (pairedDevices.isEmpty()) {
-            deviceSpinner.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, listOf("No Buds2 Pro found"))
-            log("No paired Galaxy Buds2 Pro found. Pair in Bluetooth settings first.")
+            deviceSpinner.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, listOf("No Galaxy Buds found"))
+            log("No paired Galaxy Buds found. Pair in Bluetooth settings first.")
         } else {
             val names = pairedDevices.map { "${it.name} (${it.address})" }
             deviceSpinner.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, names)
-            log("Found ${pairedDevices.size} paired Buds2 Pro device(s)")
+            log("Found ${pairedDevices.size} paired Galaxy Buds device(s)")
         }
     }
 
