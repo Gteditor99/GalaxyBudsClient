@@ -4,8 +4,6 @@ import android.app.Activity
 import android.app.AlertDialog
 import android.bluetooth.BluetoothDevice
 import android.content.Intent
-import android.content.pm.PackageManager
-import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
@@ -15,10 +13,6 @@ import java.text.SimpleDateFormat
 import java.util.*
 
 class MainActivity : Activity() {
-
-    companion object {
-        private const val REQ_BT_PERMS = 100
-    }
 
     private lateinit var btClient: BluetoothSppClient
     private var transferManager: FirmwareTransferManager? = null
@@ -80,40 +74,7 @@ class MainActivity : Activity() {
         installBtn.setOnClickListener { onInstall() }
         cancelBtn.setOnClickListener { onCancel() }
 
-        if (hasBluetoothPermissions()) {
-            refreshDeviceList()
-        } else {
-            requestBluetoothPermissions()
-        }
-    }
-
-    private fun hasBluetoothPermissions(): Boolean {
-        if (Build.VERSION.SDK_INT >= 31) {
-            return checkSelfPermission("android.permission.BLUETOOTH_CONNECT") == PackageManager.PERMISSION_GRANTED &&
-                    checkSelfPermission("android.permission.BLUETOOTH_SCAN") == PackageManager.PERMISSION_GRANTED
-        }
-        return true
-    }
-
-    private fun requestBluetoothPermissions() {
-        if (Build.VERSION.SDK_INT >= 31) {
-            requestPermissions(arrayOf(
-                "android.permission.BLUETOOTH_CONNECT",
-                "android.permission.BLUETOOTH_SCAN"
-            ), REQ_BT_PERMS)
-        }
-    }
-
-    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        if (requestCode == REQ_BT_PERMS) {
-            if (grantResults.all { it == PackageManager.PERMISSION_GRANTED }) {
-                refreshDeviceList()
-            } else {
-                log("Bluetooth permissions denied. Cannot scan for devices.")
-                toast("Bluetooth permissions required")
-            }
-        }
+        refreshDeviceList()
     }
 
     override fun onDestroy() {

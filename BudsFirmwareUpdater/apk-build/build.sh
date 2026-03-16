@@ -15,7 +15,8 @@ ZIPALIGN="zipalign"
 KOTLINC="kotlinc"
 
 OUT="$BUILD_DIR/output"
-rm -rf "$OUT"
+# Clean output but preserve .gitignore
+find "$OUT" -mindepth 1 ! -name '.gitignore' -delete 2>/dev/null || true
 mkdir -p "$OUT/classes" "$OUT/gen" "$OUT/dex" "$OUT/apk"
 
 echo "=== Step 1: Generate R.java ==="
